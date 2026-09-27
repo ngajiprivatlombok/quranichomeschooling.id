@@ -1,1 +1,87 @@
-const dateInput=document.querySelector('#date');const slots=document.querySelector('#slots');const selectedBox=document.querySelector('#selected');const msg=document.querySelector('#message');const picked=[];const fmt=new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Makassar'});function label(day,time){return `${fmt.format(new Date(day+'T12:00:00+08:00'))}, ${time} WITA`;}function refresh(){selectedBox.textContent=picked.length?`${picked.length}/2 sesi: ${picked.map(x=>label(x.day,x.time)).join(' · ')}`:'Belum ada sesi dipilih (0/2).';}function draw(){slots.replaceChildren();const day=dateInput.value;if(!day){slots.innerHTML='<p>Pilih tanggal untuk melihat jam yang tersedia.</p>';return;}const date=new Date(day+'T12:00:00+08:00');if(day<'2026-10-01'||day>'2026-10-30'||Number.isNaN(date.getTime())){slots.innerHTML='<p>Pilih tanggal 1–30 Oktober 2026.</p>';return;}const weekday=date.getUTCDay();const weekend=weekday===0||weekday===6;const ranges=weekend?[[600,1320]]:[[480,570],[1140,1320]];for(const [start,end] of ranges){for(let minute=start;minute+45<=end;minute+=50){const time=`${String(Math.floor(minute/60)).padStart(2,'0')}.${String(minute%60).padStart(2,'0')}–${String(Math.floor((minute+45)/60)).padStart(2,'0')}.${String((minute+45)%60).padStart(2,'0')}`;const btn=document.createElement('button');btn.type='button';btn.className='slot';btn.textContent=time;btn.setAttribute('aria-pressed',String(picked.some(x=>x.day===day&&x.time===time)));btn.onclick=()=>{const index=picked.findIndex(x=>x.day===day&&x.time===time);if(index>=0)picked.splice(index,1);else if(picked.some(x=>x.day===day))msg.textContent='Pilih dua tanggal yang berbeda.';else if(picked.length===2)msg.textContent='Maksimal dua sesi. Hapus satu pilihan dahulu.';else{picked.push({day,time});msg.textContent='';}refresh();draw()};slots.append(btn)}}}dateInput.addEventListener('change',draw);document.querySelector('#form').addEventListener('submit',event=>{event.preventDefault();const form=event.currentTarget;if(!form.reportValidity())return;if(picked.length!==2){msg.textContent='Pilih tepat dua sesi pada tanggal yang berbeda.';return;}const data=new FormData(form);const age=Number(data.get('age'));if(age<5||age>14){msg.textContent='Kelas ini untuk anak usia 5–14 tahun.';return;}const text=`Assalamu'alaikum, saya ingin mendaftar kelas online gratis Quranic Homeschooling.\n\nNama Orang Tua: ${data.get('parent')}\nNo. HP: ${data.get('phone')}\nNama Anak: ${data.get('child')}\nUsia Anak: ${age} tahun\nMapel: ${data.get('subject')}\nPilihan sesi 1: ${label(picked[0].day,picked[0].time)}\nPilihan sesi 2: ${label(picked[1].day,picked[1].time)}\n\nMohon konfirmasi kuota dan jadwalnya. Terima kasih.`;window.open('https://wa.me/6285737086612?text='+encodeURIComponent(text),'_blank','noopener,noreferrer')});draw();
+const dateInput = document.querySelector('#date');
+const slots = document.querySelector('#slots');
+const selectedBox = document.querySelector('#selected');
+const msg = document.querySelector('#message');
+const picked = [];
+const fmt = new Intl.DateTimeFormat('id-ID', {
+	weekday: 'long',
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	timeZone: 'Asia/Makassar'
+});
+
+function label(day, time) {
+	return `${fmt.format(new Date(day+'T12:00:00+08:00'))}, ${time} WITA`;
+}
+
+function refresh() {
+	selectedBox.textContent = picked.length ? `${picked.length}/2 sesi: ${picked.map(x=>label(x.day,x.time)).join(' · ')}` : 'Belum ada sesi dipilih (0/2).';
+}
+
+function draw() {
+	slots.replaceChildren();
+	const day = dateInput.value;
+	if (!day) {
+		slots.innerHTML = '<p>Pilih tanggal untuk melihat jam yang tersedia.</p>';
+		return;
+	}
+	const date = new Date(day + 'T12:00:00+08:00');
+	if (day < '2026-10-01' || day > '2026-10-30' || Number.isNaN(date.getTime())) {
+		slots.innerHTML = '<p>Pilih tanggal 1–30 Oktober 2026.</p>';
+		return;
+	}
+	const weekday = date.getUTCDay();
+	const weekend = weekday === 0 || weekday === 6;
+	const ranges = weekend ? [
+		[600, 1320]
+	] : [
+		[480, 570],
+		[1140, 1320]
+	];
+	for (const [start, end] of ranges) {
+		for (let minute = start; minute + 45 <= end; minute += 50) {
+			const time = `${String(Math.floor(minute/60)).padStart(2,'0')}.${String(minute%60).padStart(2,'0')}–${String(Math.floor((minute+45)/60)).padStart(2,'0')}.${String((minute+45)%60).padStart(2,'0')}`;
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'slot';
+			btn.textContent = time;
+			btn.setAttribute('aria-pressed', String(picked.some(x => x.day === day && x.time === time)));
+			btn.onclick = () => {
+				const index = picked.findIndex(x => x.day === day && x.time === time);
+				if (index >= 0) picked.splice(index, 1);
+				else if (picked.some(x => x.day === day)) msg.textContent = 'Pilih dua tanggal yang berbeda.';
+				else if (picked.length === 2) msg.textContent = 'Maksimal dua sesi. Hapus satu pilihan dahulu.';
+				else {
+					picked.push({
+						day,
+						time
+					});
+					msg.textContent = '';
+				}
+				refresh();
+				draw()
+			};
+			slots.append(btn)
+		}
+	}
+}
+dateInput.addEventListener('change', draw);
+document.querySelector('#form').addEventListener('submit', event => {
+	event.preventDefault();
+	const form = event.currentTarget;
+	if (!form.reportValidity()) return;
+	if (picked.length !== 2) {
+		msg.textContent = 'Pilih tepat dua sesi pada tanggal yang berbeda.';
+		return;
+	}
+	const data = new FormData(form);
+	const age = Number(data.get('age'));
+	if (age < 5 || age > 14) {
+		msg.textContent = 'Kelas ini untuk anak usia 5–14 tahun.';
+		return;
+	}
+	const text = `Assalamu'alaikum, saya ingin mendaftar kelas online gratis Quranic Homeschooling.\n\nNama Orang Tua: ${data.get('parent')}\nNo. HP: ${data.get('phone')}\nNama Anak: ${data.get('child')}\nUsia Anak: ${age} tahun\nMapel: ${data.get('subject')}\nPilihan sesi 1: ${label(picked[0].day,picked[0].time)}\nPilihan sesi 2: ${label(picked[1].day,picked[1].time)}\n\nMohon konfirmasi kuota dan jadwalnya. Terima kasih.`;
+	window.open('https://wa.me/6285737086612?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer')
+});
+draw();
